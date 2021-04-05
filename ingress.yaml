@@ -1,0 +1,75 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: <INGRESS_NAME>
+  annotations:
+    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/auth-response-headers: X-Auth-Request-Access-Token, Authorization, X-Forwarded-User, X-Forwarded-Groups, X-Forwarded-Email, X-Forwarded-Preferred-Username
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"    
+spec:
+  rules:
+  - host: <APP_DOMAIN>
+    http:
+      paths:
+      - backend:
+          serviceName: <SERVICE_NAME>
+          servicePort: 80
+  tls:
+  - hosts:
+    - <APP_DOMAIN>
+    secretName: <TLS_SECRET_NAME>
+
+---
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: <PUBLIC_INGRESS_NAME>
+  annotations:
+    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/auth-response-headers: X-Auth-Request-Access-Token, Authorization, X-Forwarded-User, X-Forwarded-Groups, X-Forwarded-Email, X-Forwarded-Preferred-Username
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  rules:
+  - host: <APP_DOMAIN>
+    http:
+      paths:
+      - path: /public
+        backend:
+          serviceName: <SERVICE_NAME>
+          servicePort: 80
+  tls:
+  - hosts:
+    - <APP_DOMAIN>
+    secretName: <TLS_SECRET_NAME>
+
+---
+
+kind: Ingress
+apiVersion: extensions/v1beta1
+metadata:
+  name: oauth2-proxy
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+spec:
+  rules:
+  - host: <APP_DOMAIN>
+    http:
+      paths:
+      - path: /oauth2     
+        backend:
+          serviceName: oauth2-proxy
+          servicePort: 4180
+  tls:
+  - hosts:
+    - <APP_DOMAIN>
+    secretName: <TLS_SECRET_NAME>

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oauth-allowed-emails
+data:
+  emails.txt: |
+    user1@example.com
+    user2@hotmail.com
